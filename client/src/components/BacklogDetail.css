@@ -1,0 +1,212 @@
+.backlog-detail {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.backlog-detail-loading {
+  padding: var(--space-5);
+  color: var(--path-grey-500);
+}
+
+.backlog-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.backlog-detail-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--path-grey-900);
+  flex: 1;
+  min-width: 0;
+}
+
+.backlog-detail-input.title {
+  width: 100%;
+  padding: var(--space-2);
+  font-size: 18px;
+  border: 1px solid var(--path-grey-300);
+  border-radius: var(--radius-md);
+}
+
+.backlog-detail-close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 24px;
+  color: var(--path-grey-600);
+  border-radius: var(--radius-md);
+}
+
+.backlog-detail-close:hover {
+  background: var(--path-grey-100);
+}
+
+.backlog-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 14px;
+}
+
+.backlog-detail-priority {
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.backlog-detail-priority.priority-now { background: var(--path-primary); color: white; }
+.backlog-detail-priority.priority-soon { background: var(--path-primary-light-1); color: white; }
+.backlog-detail-priority.priority-later { background: var(--path-grey-300); color: var(--path-grey-700); }
+
+.backlog-detail-select {
+  padding: 2px 6px;
+  border: 1px solid var(--path-grey-300);
+  border-radius: var(--radius-sm);
+}
+
+.backlog-detail-input.small {
+  width: auto;
+  padding: 2px 6px;
+  border: 1px solid var(--path-grey-300);
+  border-radius: var(--radius-sm);
+}
+
+.backlog-detail-color-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.backlog-detail-due-alert {
+  margin-left: var(--space-2);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.backlog-detail-due-alert.due-overdue {
+  background: var(--path-secondary);
+  color: white;
+}
+
+.backlog-detail-due-alert.due-soon {
+  background: var(--path-secondary-light-1);
+  color: var(--path-grey-900);
+}
+
+.backlog-detail-edit-row label { margin-right: var(--space-2); }
+.backlog-detail-colors {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+.backlog-detail-color-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.backlog-detail-color-btn.active { border-color: var(--path-grey-900); }
+
+.backlog-detail-progress-bar {
+  height: 8px;
+  background: var(--path-grey-200);
+  border-radius: 4px;
+  position: relative;
+  max-width: 200px;
+}
+.backlog-detail-progress-fill {
+  height: 100%;
+  background: var(--path-primary);
+  border-radius: 4px;
+  transition: width 0.2s;
+}
+
+.backlog-detail-description h3,
+.backlog-detail-tickets h3 {
+  margin: 0 0 var(--space-2);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--path-grey-700);
+}
+
+.backlog-detail-description-text {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--path-grey-800);
+}
+
+.backlog-detail-textarea {
+  width: 100%;
+  padding: var(--space-2);
+  border: 1px solid var(--path-grey-300);
+  border-radius: var(--radius-md);
+  resize: vertical;
+}
+
+.backlog-detail-textarea.small {
+  min-height: 60px;
+}
+
+.backlog-detail-ticket-add {
+  margin-bottom: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.backlog-detail-ticket-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.backlog-detail-ticket {
+  padding: var(--space-2);
+  background: var(--path-grey-100);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-2);
+}
+.backlog-detail-ticket-content {
+  margin: 0 0 var(--space-1);
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+.backlog-detail-empty { margin: 0; color: var(--path-grey-500); }
+
+.backlog-detail-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  border: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.btn-primary { background: #297D2D; color: white; }
+.btn-primary:hover,
+.btn-primary:focus-visible { background: #3B9F40; color: white; border-color: #3B9F40; }
+.btn-secondary { background: var(--path-grey-200); color: var(--path-grey-800); }
+.btn-secondary:hover { background: var(--path-grey-300); }
+.btn-success { background: var(--path-primary-light-2); color: var(--path-grey-900); }
+.btn-success:hover { background: var(--path-primary-light-1); color: white; }
+.btn-danger { background: var(--path-secondary-light-2); color: var(--path-grey-900); }
+.btn-danger:hover { background: var(--path-secondary); color: white; }

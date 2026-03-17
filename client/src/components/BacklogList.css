@@ -1,0 +1,164 @@
+.backlog-list {
+  list-style: none !important;
+  margin: 0;
+  padding: 0;
+}
+
+.backlog-list li {
+  list-style: none !important;
+  padding-left: 0;
+}
+
+.backlog-list li::marker {
+  content: none;
+  display: none;
+}
+
+.backlog-list,
+.backlog-list li {
+  list-style-type: none;
+}
+
+.backlog-list-empty {
+  padding: var(--space-5);
+  color: var(--path-grey-500);
+  text-align: center;
+}
+
+.backlog-list-item {
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid transparent;
+  border-bottom: 1px solid var(--path-grey-200);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.backlog-list-item:hover {
+  background: var(--path-grey-100);
+}
+
+.backlog-list-item-selected {
+  background: var(--path-highlight);
+  border-left-color: var(--path-primary);
+}
+
+.backlog-list-item-description {
+  font-size: 12px;
+  color: var(--path-grey-600);
+  margin-top: var(--space-1);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.35;
+}
+
+.backlog-list-item-dragging {
+  opacity: 0.85;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.backlog-list-item-drag-handle {
+  flex-shrink: 0;
+  cursor: grab;
+  color: var(--path-grey-400);
+  padding: 0 var(--space-1);
+  font-size: 14px;
+  user-select: none;
+}
+
+.backlog-list-item-drag-handle:active {
+  cursor: grabbing;
+}
+
+.backlog-list-item-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.backlog-list-item-title {
+  flex: 1;
+  font-weight: 500;
+  color: var(--path-grey-900);
+  min-width: 0;
+}
+
+.backlog-list-item-priority {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.priority-now {
+  background: #FF5252;
+  color: white;
+}
+
+.priority-soon {
+  background: #FFD4D0;
+  color: var(--path-grey-900);
+}
+
+.priority-later {
+  background: #97DF9A;
+  color: var(--path-grey-900);
+}
+
+.backlog-list-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  font-size: 12px;
+  color: var(--path-grey-600);
+}
+
+.backlog-list-item-project {
+  font-weight: 500;
+  color: var(--path-primary);
+}
+
+.backlog-list-item-due-alert {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.backlog-list-item-due-alert.due-overdue {
+  background: var(--path-secondary);
+  color: white;
+}
+
+.backlog-list-item-due-alert.due-soon {
+  background: var(--path-secondary-light-1);
+  color: var(--path-grey-900);
+}
+
+.backlog-list-inline {
+  padding: 0;
+}
+
+.backlog-list-inline .backlog-list-inline-li {
+  list-style: none !important;
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+
+.backlog-list-inline .backlog-list-inline-li::marker {
+  content: none;
+  display: none;
+}
+
+.backlog-drag-overlay {
+  cursor: grabbing;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--path-grey-50, #fafafa);
+  opacity: 0.98;
+}

@@ -1,0 +1,116 @@
+.home-filters {
+  position: relative;
+  margin-right: var(--space-3);
+}
+
+.home-filters-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--path-grey-700);
+  background: none;
+  border: 1px solid var(--path-grey-300);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.home-filters-trigger:hover {
+  background: var(--path-grey-100);
+  border-color: var(--path-grey-400);
+}
+
+.home-filters-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+  color: white;
+  background: var(--path-primary);
+  border-radius: 9px;
+}
+
+.home-filters-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-1);
+  min-width: 280px;
+  max-width: 360px;
+  padding: var(--space-4);
+  background: var(--path-white);
+  border: 1px solid var(--path-grey-200);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+}
+
+.home-filters-section {
+  margin-bottom: var(--space-4);
+}
+
+.home-filters-section:last-child {
+  margin-bottom: 0;
+}
+
+.home-filters-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--path-grey-700);
+  margin-bottom: var(--space-1);
+}
+
+.home-filters-hint {
+  font-size: 11px;
+  color: var(--path-grey-500);
+  margin-top: var(--space-1);
+  margin-bottom: 0;
+}
+
+.home-filters-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  color: var(--path-grey-800);
+  cursor: pointer;
+}
+
+.home-filters-check input {
+  width: 16px;
+  height: 16px;
+}
+
+.home-filters-check-inline {
+  margin-bottom: var(--space-1);
+}
+
+.home-filters-projects {
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.home-filters-select,
+.home-filters-input {
+  width: 100%;
+  padding: var(--space-2);
+  font-size: 14px;
+  border: 1px solid var(--path-grey-300);
+  border-radius: var(--radius-sm);
+  background: var(--path-white);
+}
+
+.home-filters-input {
+  margin-top: var(--space-2);
+}
+
+.home-filters-empty {
+  font-size: 13px;
+  color: var(--path-grey-500);
+}

@@ -1,0 +1,86 @@
+.project-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.project-tab {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--path-grey-300);
+  background: var(--path-white);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--path-grey-700);
+}
+
+.project-tab:hover {
+  background: var(--path-grey-100);
+}
+
+.project-tab-active {
+  background: var(--path-highlight);
+  border-color: var(--path-primary);
+  color: var(--path-grey-900);
+}
+
+.backlog-add-form {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--path-grey-200);
+  min-width: 0;
+}
+
+.backlog-add-input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--path-grey-300);
+  border-radius: var(--radius-md);
+  min-height: 40px;
+}
+
+.backlog-add-btn {
+  flex-shrink: 0;
+}
+
+.backlog-add-error {
+  padding: var(--space-2) var(--space-3);
+  font-size: 13px;
+  color: var(--path-secondary);
+  background: var(--path-secondary-light-2);
+  border-radius: var(--radius-sm);
+  margin: 0 var(--space-3) var(--space-2);
+}
+
+.btn-sm {
+  padding: var(--space-2) var(--space-3);
+  font-size: 14px;
+}
+
+.project-show-completed {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: 13px;
+  color: var(--path-grey-600);
+}
+
+.project-show-completed input {
+  margin: 0;
+}
+
+.project-page .single-pane {
+  max-width: 720px;
+}
+
+.project-page .single-pane .backlog-list {
+  background: var(--path-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--path-grey-200);
+  overflow: hidden;
+}
