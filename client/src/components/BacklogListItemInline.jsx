@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
 import { api } from '../api';
 import { getDueDateStatus } from '../utils/dateAlerts';
@@ -6,6 +6,25 @@ import './BacklogListItemInline.css';
 
 const PRIORITIES = ['Now', 'Soon', 'Later'];
 const PRIORITY_COLORS = { Now: '#FF5252', Soon: '#FFD4D0', Later: '#97DF9A' };
+
+const EFFORT_OPTIONS = [
+  { value: '', label: '—' },
+  { value: '0.5', label: '0.5 day' },
+  { value: '1', label: '1 day' },
+  { value: '1.5', label: '1.5 days' },
+  { value: '2', label: '2 days' },
+  { value: '2.5', label: '2.5 days' },
+  { value: '3', label: '3 days' },
+  { value: '3.5', label: '3.5 days' },
+  { value: '4', label: '4 days' },
+  { value: '4.5', label: '4.5 days' },
+  { value: '5', label: '5 days' },
+  { value: '6', label: '6 days' },
+  { value: '7', label: '7 days' },
+  { value: '8', label: '8 days' },
+  { value: '9', label: '9 days' },
+  { value: '10', label: '10 days' }
+];
 
 function formatDate(str) {
   if (!str) return '';
@@ -34,7 +53,8 @@ export default function BacklogListItemInline({
     description: item.description ?? '',
     priority: item.priority ?? 'Later',
     progress: item.progress ?? 0,
-    due_date: item.due_date ? formatDateInput(item.due_date) : ''
+    due_date: item.due_date ? formatDateInput(item.due_date) : '',
+    effort_days: item.effort_days != null ? String(item.effort_days) : ''
   });
 
   const updateMutation = useMutation(
@@ -44,7 +64,6 @@ export default function BacklogListItemInline({
         queryClient.invalidateQueries(['backlog']);
         queryClient.invalidateQueries(['backlog-consolidated']);
         onUpdated?.(updatedItem);
-        onEditClick(null);
       }
     }
   );
@@ -84,37 +103,67 @@ export default function BacklogListItemInline({
     }
   );
 
+  const saveDebounceRef = useRef(null);
+
+  const buildPayload = (overrides = {}) => ({
+    title: (overrides.title !== undefined ? overrides.title : form.title) ?? '',
+    description: (overrides.description !== undefined ? overrides.description : form.description) ?? '',
+    priority: (overrides.priority !== undefined ? overrides.priority : form.priority) ?? 'Later',
+    progress: (overrides.progress !== undefined ? overrides.progress : form.progress) ?? 0,
+    due_date: (overrides.due_date !== undefined ? overrides.due_date : form.due_date) || null,
+    effort_days: (() => { const v = overrides.effort_days !== undefined ? overrides.effort_days : form.effort_days; return v === '' ? null : (parseFloat(v) || null); })()
+  });
+
+  const saveNow = (payload) => {
+    if (saveDebounceRef.current) {
+      clearTimeout(saveDebounceRef.current);
+      saveDebounceRef.current = null;
+    }
+    updateMutation.mutate(payload);
+  };
+
+  const scheduleSave = () => {
+    if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+    saveDebounceRef.current = setTimeout(() => saveNow(buildPayload()), 500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isExpanded || !item) return;
+    setForm({
+      title: item.title,
+      description: item.description ?? '',
+      priority: item.priority ?? 'Later',
+      progress: item.progress ?? 0,
+      due_date: item.due_date ? formatDateInput(item.due_date) : '',
+      effort_days: item.effort_days != null ? String(item.effort_days) : ''
+    });
+  }, [isExpanded, item?.id, item?.updated_at]);
+
   const handleOpenEdit = () => {
     setForm({
       title: item.title,
       description: item.description ?? '',
       priority: item.priority ?? 'Later',
       progress: item.progress ?? 0,
-      due_date: item.due_date ? formatDateInput(item.due_date) : ''
+      due_date: item.due_date ? formatDateInput(item.due_date) : '',
+      effort_days: item.effort_days != null ? String(item.effort_days) : ''
     });
     onEditClick(item.id);
   };
 
-  const handleSave = (e) => {
-    e.preventDefault();
-    updateMutation.mutate({
-      ...form,
-      due_date: form.due_date || null
-    });
-  };
-
-  const handleCancel = () => {
+  const handleClose = () => {
+    if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+    saveNow(buildPayload());
     onEditClick(null);
   };
 
   const isCompleted = item.status === 'completed';
-
-  const isDirty =
-    form.title !== (item.title ?? '') ||
-    (form.description ?? '') !== (item.description ?? '') ||
-    form.priority !== (item.priority ?? 'Later') ||
-    Number(form.progress) !== Number(item.progress ?? 0) ||
-    (form.due_date || '') !== (item.due_date ? formatDateInput(item.due_date) : '');
 
   const handleEl = dragHandle ?? (
     <span className="inline-item-drag-handle inline-item-drag-handle-static" aria-hidden>⋮⋮</span>
@@ -131,7 +180,7 @@ export default function BacklogListItemInline({
         style={{ borderLeftColor: (projectColor || item.project_color || PRIORITY_COLORS[item.priority]) || 'transparent' }}
       >
         <div className="inline-item-row">
-          <div className="inline-item-main" onClick={() => !isExpanded && onEditClick && onEditClick(item.id)}>
+          <div className="inline-item-main" onClick={() => { if (isExpanded) handleClose(); else onEditClick?.(item.id); }}>
             <span className="inline-item-title">{item.title}</span>
             {isCompleted ? (
               <span className="inline-item-priority priority-completed">Completed</span>
@@ -144,7 +193,7 @@ export default function BacklogListItemInline({
           <button
             type="button"
             className="inline-item-edit-btn"
-            onClick={(e) => { e.stopPropagation(); isExpanded ? handleCancel() : handleOpenEdit(); }}
+            onClick={(e) => { e.stopPropagation(); isExpanded ? handleClose() : handleOpenEdit(); }}
             onPointerDown={(e) => e.stopPropagation()}
             aria-label={isExpanded ? 'Close' : 'Edit'}
           >
@@ -175,6 +224,9 @@ export default function BacklogListItemInline({
               {item.progress != null && item.progress > 0 && (
                 <span className="inline-item-progress">{item.progress}%</span>
               )}
+              {item.effort_days != null && item.effort_days > 0 && (
+                <span className="inline-item-effort">{item.effort_days % 1 === 0 ? `${Math.round(item.effort_days)}d` : `${item.effort_days}d`}</span>
+              )}
             </span>
             <span className="inline-item-meta-right">
               {item.due_date && getDueDateStatus(item.due_date) === 'overdue' && (
@@ -188,13 +240,13 @@ export default function BacklogListItemInline({
         )}
 
         {isExpanded && (
-        <form className="inline-item-form" onSubmit={handleSave}>
+        <div className="inline-item-form">
           <label className="inline-form-label">
             Title
             <input
               type="text"
               value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              onChange={(e) => { setForm((f) => ({ ...f, title: e.target.value })); scheduleSave(); }}
               className="inline-form-input"
               required
             />
@@ -203,28 +255,39 @@ export default function BacklogListItemInline({
             Description
             <textarea
               value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              onChange={(e) => { setForm((f) => ({ ...f, description: e.target.value })); scheduleSave(); }}
               className="inline-form-textarea"
               rows={3}
             />
           </label>
           <div className="inline-form-row inline-form-row-actions-align">
-            <select
-              value={form.priority}
-              onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))}
-              className="inline-form-select inline-form-priority-select"
-              aria-label="Priority"
-            >
-              {PRIORITIES.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
+            <label className="inline-form-label">
+              Priority
+              <select
+                value={form.priority}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setForm((f) => ({ ...f, priority: v }));
+                  saveNow(buildPayload({ priority: v }));
+                }}
+                className="inline-form-select inline-form-priority-select"
+                aria-label="Priority"
+              >
+                {PRIORITIES.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </label>
             <label className="inline-form-label">
               Due date
               <input
                 type="date"
                 value={form.due_date}
-                onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setForm((f) => ({ ...f, due_date: v }));
+                  saveNow(buildPayload({ due_date: v }));
+                }}
                 className="inline-form-input small"
               />
             </label>
@@ -235,22 +298,39 @@ export default function BacklogListItemInline({
                 min={0}
                 max={100}
                 value={form.progress}
-                onChange={(e) => setForm((f) => ({ ...f, progress: Number(e.target.value) || 0 }))}
+                onChange={(e) => {
+                  const v = Number(e.target.value) || 0;
+                  setForm((f) => ({ ...f, progress: v }));
+                  saveNow(buildPayload({ progress: v }));
+                }}
                 className="inline-form-input small"
               />
             </label>
+            <label className="inline-form-label">
+              Effort (days)
+              <input
+                type="number"
+                min={0}
+                step="any"
+                list={`effort-datalist-${item.id}`}
+                value={form.effort_days}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setForm((f) => ({ ...f, effort_days: v }));
+                  saveNow(buildPayload({ effort_days: v }));
+                }}
+                className="inline-form-input small"
+                placeholder="—"
+                aria-label="Effort in days"
+              />
+              <datalist id={`effort-datalist-${item.id}`}>
+                {EFFORT_OPTIONS.filter((opt) => opt.value !== '').map((opt) => (
+                  <option key={opt.value} value={opt.value} />
+                ))}
+              </datalist>
+            </label>
           </div>
           <div className="inline-form-actions">
-            <button
-              type="submit"
-              className={`btn btn-secondary btn-sm ${isDirty ? 'btn-save-dirty' : ''}`}
-              disabled={updateMutation.isLoading}
-            >
-              Save
-            </button>
-            <button type="button" className="btn btn-secondary btn-sm" onClick={handleCancel}>
-              Cancel
-            </button>
             {isCompleted ? (
               <button
                 type="button"
@@ -279,7 +359,8 @@ export default function BacklogListItemInline({
               Delete
             </button>
           </div>
-        </form>
+          {updateMutation.isLoading && <p className="inline-form-saving" aria-live="polite">Saving…</p>}
+        </div>
         )}
       </div>
     </div>

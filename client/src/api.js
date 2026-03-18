@@ -83,5 +83,10 @@ export const api = {
       const q = new URLSearchParams(params).toString();
       return request('/api/reports/summary' + (q ? '?' + q : ''));
     }
+  },
+  emailConfig: {
+    get: () => request('/api/email-config'),
+    update: (body) => request('/api/email-config', { method: 'PUT', body: JSON.stringify(body) }),
+    sendNow: () => request('/api/email-config/send-now', { method: 'POST' })
   }
 };

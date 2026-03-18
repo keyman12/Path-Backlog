@@ -8,6 +8,14 @@ router.use(requireAuth);
 const PRIORITIES = ['Now', 'Soon', 'Later'];
 const STATUSES = ['open', 'in_progress', 'completed'];
 
+function parseEffortDays(val) {
+  if (val == null || val === '') return null;
+  const n = Number(val);
+  if (Number.isNaN(n) || n < 0) return null;
+  const half = Math.round(n * 2) / 2;
+  return half;
+}
+
 function rowToItem(row) {
   return {
     id: row.id,
@@ -18,6 +26,7 @@ function rowToItem(row) {
     priority: row.priority,
     status: row.status,
     progress: row.progress,
+    effort_days: row.effort_days != null ? row.effort_days : null,
     color_label: row.color_label,
     due_date: row.due_date,
     sort_order: row.sort_order,
@@ -61,7 +70,7 @@ router.get('/', (req, res) => {
 // Query params: include_completed, due (exact YYYY-MM-DD | next_week | next_2_weeks | next_month),
 // completed (this_week | last_week | last_month | any), project_ids (comma-separated ids).
 router.get('/consolidated', (req, res) => {
-  const { include_completed, due, completed: completedFilter, project_ids: projectIdsRaw, project_id: singleProjectId } = req.query;
+  const { include_completed, due, completed: completedFilter, project_ids: projectIdsRaw, project_id: singleProjectId, filter: listFilter } = req.query;
   let sql = `
     SELECT bi.*, p.name AS project_name, p.color AS project_color, s.name AS subfolder_name
     FROM backlog_items bi
@@ -71,7 +80,20 @@ router.get('/consolidated', (req, res) => {
   const conditions = [];
   const params = [];
 
-  if (include_completed !== 'true' && include_completed !== '1') {
+  if (listFilter === 'next_best_actions' || listFilter === 'now_only' || listFilter === 'now_and_soon') {
+    conditions.push("(bi.status IS NULL OR bi.status != 'completed')");
+    if (listFilter === 'next_best_actions') {
+      conditions.push(`(
+        bi.priority = 'Now'
+        OR (bi.due_date IS NOT NULL AND date(bi.due_date) >= date('now') AND date(bi.due_date) <= date('now', '+2 days'))
+        OR (bi.progress >= 75)
+      )`);
+    } else if (listFilter === 'now_only') {
+      conditions.push("bi.priority = 'Now'");
+    } else {
+      conditions.push("bi.priority IN ('Now', 'Soon')");
+    }
+  } else if (include_completed !== 'true' && include_completed !== '1') {
     conditions.push("(bi.status IS NULL OR bi.status != 'completed')");
   }
   let projectIdsParam = '';
@@ -91,7 +113,7 @@ router.get('/consolidated', (req, res) => {
       params.push(...ids);
     }
   }
-  if (due && due !== '' && due !== 'exact') {
+  if (!listFilter && due && due !== '' && due !== 'exact') {
     conditions.push('bi.due_date IS NOT NULL');
     if (due === 'next_week') {
       conditions.push("(date(bi.due_date) >= date('now') AND date(bi.due_date) <= date('now', '+7 days'))");
@@ -104,7 +126,7 @@ router.get('/consolidated', (req, res) => {
       params.push(due);
     }
   }
-  if (completedFilter && completedFilter !== 'any' && (include_completed === 'true' || include_completed === '1')) {
+  if (!listFilter && completedFilter && completedFilter !== 'any' && (include_completed === 'true' || include_completed === '1')) {
     if (completedFilter === 'this_week') {
       conditions.push("date(bi.completed_at) >= date('now', '-7 days')");
     } else if (completedFilter === 'last_week') {
@@ -143,7 +165,7 @@ router.get('/:id', (req, res) => {
 router.post('/', (req, res) => {
   const {
     project_id, subfolder_id, title, description, priority, status, progress,
-    color_label, due_date, sort_order
+    effort_days, color_label, due_date, sort_order
   } = req.body || {};
   if (!project_id || !title || !String(title).trim()) {
     return res.status(400).json({ error: 'project_id and title required' });
@@ -151,6 +173,7 @@ router.post('/', (req, res) => {
   const priorityVal = PRIORITIES.includes(priority) ? priority : 'Later';
   const statusVal = STATUSES.includes(status) ? status : 'open';
   const progressVal = Math.min(100, Math.max(0, Number(progress) || 0));
+  const effortDaysVal = parseEffortDays(effort_days);
   const nextOrder = db.prepare(
     'SELECT COALESCE(MAX(sort_order), -1) + 1 AS n FROM backlog_items WHERE project_id = ? AND (status IS NULL OR status != ?)'
   ).get(Number(project_id), 'completed');
@@ -161,8 +184,8 @@ router.post('/', (req, res) => {
   const id = db.prepare(`
     INSERT INTO backlog_items (
       project_id, subfolder_id, title, description, priority, status, progress,
-      color_label, due_date, sort_order, created_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      effort_days, color_label, due_date, sort_order, created_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     Number(project_id),
     subfolderVal,
@@ -171,6 +194,7 @@ router.post('/', (req, res) => {
     priorityVal,
     statusVal,
     progressVal,
+    effortDaysVal,
     color_label != null ? String(color_label) : null,
     due_date || null,
     order,
@@ -217,7 +241,7 @@ router.patch('/:id', (req, res) => {
   if (!item) return res.status(404).json({ error: 'Not found' });
   const allowed = [
     'subfolder_id', 'title', 'description', 'priority', 'status', 'progress',
-    'color_label', 'due_date', 'sort_order'
+    'effort_days', 'color_label', 'due_date', 'sort_order'
   ];
   const updates = [];
   const params = [];
@@ -228,6 +252,11 @@ router.patch('/:id', (req, res) => {
     if (key === 'progress') {
       const v = Math.min(100, Math.max(0, Number(req.body[key]) || 0));
       updates.push('progress = ?'); params.push(v);
+      continue;
+    }
+    if (key === 'effort_days') {
+      const v = req.body[key] == null || req.body[key] === '' ? null : parseEffortDays(req.body[key]);
+      updates.push('effort_days = ?'); params.push(v);
       continue;
     }
     updates.push(`${key} = ?`);

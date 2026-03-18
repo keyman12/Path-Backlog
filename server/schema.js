@@ -55,6 +55,34 @@ function runSchema(db) {
   `);
 }
 
+function ensureEffortDaysColumn(db) {
+  const cols = db.prepare('PRAGMA table_info(backlog_items)').all();
+  if (cols.some((c) => c.name === 'effort_days')) return;
+  db.exec('ALTER TABLE backlog_items ADD COLUMN effort_days REAL');
+}
+
+function ensureEmailConfigTable(db) {
+  const table = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='email_config'").get();
+  if (!table) {
+    db.exec(`
+      CREATE TABLE email_config (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        recipients TEXT NOT NULL DEFAULT '[]',
+        content_type TEXT NOT NULL DEFAULT 'next_best_actions',
+        send_time TEXT NOT NULL DEFAULT '09:00',
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        last_sent_at TEXT
+      );
+      INSERT INTO email_config (id, recipients, content_type, send_time) VALUES (1, '[]', 'next_best_actions', '09:00');
+    `);
+    return;
+  }
+  const cols = db.prepare('PRAGMA table_info(email_config)').all();
+  if (!cols.some((c) => c.name === 'last_sent_at')) {
+    db.exec('ALTER TABLE email_config ADD COLUMN last_sent_at TEXT');
+  }
+}
+
 const PROJECT_COLOR_PALETTE = [
   '#297D2D', '#FF5252', '#2196F3', '#FF9800', '#9C27B0',
   '#00BCD4', '#795548', '#607D8B', '#E91E63', '#4CAF50'
@@ -82,4 +110,4 @@ function ensureProjectColorColumn(db) {
   });
 }
 
-module.exports = { runSchema, seedProjects, ensureProjectColorColumn, defaultProjects, PROJECT_COLOR_PALETTE };
+module.exports = { runSchema, seedProjects, ensureProjectColorColumn, ensureEffortDaysColumn, ensureEmailConfigTable, defaultProjects, PROJECT_COLOR_PALETTE };

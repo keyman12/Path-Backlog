@@ -135,8 +135,8 @@
 }
 
 .backlog-list-item-due-alert.due-soon {
-  background: var(--path-secondary-light-1);
-  color: var(--path-grey-900);
+  background: var(--path-grey-800);
+  color: white;
 }
 
 .backlog-list-inline {

@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useAuth } from '../App';
 import { api } from '../api';
+import { getGanttSettings, saveGanttSettings, GANTT_DEFAULTS } from '../utils/ganttSettings';
 import './Settings.css';
 
 const PRIMARY_BTN_BASE = {
@@ -48,6 +49,50 @@ function formatDate(str) {
 function getInitials(name) {
   if (!name) return '?';
   return name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+}
+
+function GanttSettingsForm() {
+  const [settings, setSettings] = useState(getGanttSettings);
+
+  const handleManDaysChange = (e) => {
+    const v = parseFloat(e.target.value);
+    const next = { ...settings, manDaysPerWeek: Number.isNaN(v) || v <= 0 ? GANTT_DEFAULTS.manDaysPerWeek : Math.max(0.5, v) };
+    setSettings(next);
+    saveGanttSettings(next);
+  };
+
+  const handleScaleChange = (e) => {
+    const v = e.target.value;
+    if (!['days', 'weeks', 'months'].includes(v)) return;
+    const next = { ...settings, defaultTimeScale: v };
+    setSettings(next);
+    saveGanttSettings(next);
+  };
+
+  return (
+    <div className="settings-form-grid" style={{ gridTemplateColumns: '1fr 1fr', maxWidth: 480 }}>
+      <div className="settings-form-field">
+        <label className="settings-label">Man-days per week</label>
+        <input
+          type="number"
+          min={0.5}
+          step={0.5}
+          value={settings.manDaysPerWeek}
+          onChange={handleManDaysChange}
+          className="settings-input"
+          aria-description="Available resource per week (e.g. 10 = 2 people full-time)"
+        />
+      </div>
+      <div className="settings-form-field">
+        <label className="settings-label">Default time scale</label>
+        <select value={settings.defaultTimeScale} onChange={handleScaleChange} className="settings-select">
+          <option value="days">Days</option>
+          <option value="weeks">Weeks</option>
+          <option value="months">Months</option>
+        </select>
+      </div>
+    </div>
+  );
 }
 
 export default function Settings() {
@@ -304,6 +349,36 @@ export default function Settings() {
           </div>
         </section>
 
+        {/* ── Gantt settings ── */}
+        <section className="settings-section">
+          <div className="settings-section-header">
+            <div className="settings-section-icon" aria-hidden>📊</div>
+            <div className="settings-section-heading">
+              <h2 className="settings-section-title">Gantt settings</h2>
+              <p className="settings-section-desc">Configure the Gantt chart: how many man-days per week are available for scheduling, and the default time scale (days, weeks, or months). You can also change the scale from the chart.</p>
+            </div>
+          </div>
+          <div className="settings-section-body">
+            <GanttSettingsForm />
+          </div>
+        </section>
+
+        {/* ── Email (admin only) ── */}
+        {isAdmin && (
+          <section className="settings-section">
+            <div className="settings-section-header">
+              <div className="settings-section-icon" aria-hidden>✉️</div>
+              <div className="settings-section-heading">
+                <h2 className="settings-section-title">Daily work list email</h2>
+                <p className="settings-section-desc">Send the day's work list to a list of recipients at a set time. Choose what to include: next best actions (Now + due in 48h + 75%+ complete), Now only, or Now & Soon.</p>
+              </div>
+            </div>
+            <div className="settings-section-body">
+              <EmailConfigPanel />
+            </div>
+          </section>
+        )}
+
         {/* ── Users (admin only) ── */}
         {isAdmin && (
           <section className="settings-section">
@@ -323,6 +398,151 @@ export default function Settings() {
         )}
       </div>
     </div>
+  );
+}
+
+const EMAIL_CONTENT_OPTIONS = [
+  { value: 'next_best_actions', label: 'Next best actions (Now + due in 48h + 75%+ complete)' },
+  { value: 'now_only', label: 'Now only' },
+  { value: 'now_and_soon', label: 'Now & Soon' }
+];
+
+function EmailConfigPanel() {
+  const queryClient = useQueryClient();
+  const { data: config, isLoading } = useQuery('email-config', api.emailConfig.get, { staleTime: 30 * 1000 });
+  const [recipients, setRecipients] = useState([]);
+  const [contentType, setContentType] = useState('next_best_actions');
+  const [sendTime, setSendTime] = useState('09:00');
+  const [newEmail, setNewEmail] = useState('');
+  const [newName, setNewName] = useState('');
+
+  React.useEffect(() => {
+    if (!config) return;
+    setRecipients(Array.isArray(config.recipients) ? config.recipients.map((r) => ({ email: r.email || '', name: r.name || '' })) : []);
+    setContentType(config.content_type || 'next_best_actions');
+    setSendTime(config.send_time || '09:00');
+  }, [config]);
+
+  const updateMutation = useMutation(api.emailConfig.update, {
+    onSuccess: () => queryClient.invalidateQueries('email-config')
+  });
+  const sendNowMutation = useMutation(api.emailConfig.sendNow, {
+    onSuccess: () => queryClient.invalidateQueries('email-config')
+  });
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    updateMutation.mutate({ recipients, content_type: contentType, send_time: sendTime });
+  };
+
+  const handleSendNow = () => {
+    updateMutation.mutate(
+      { recipients, content_type: contentType, send_time: sendTime },
+      {
+        onSuccess: () => {
+          sendNowMutation.mutate();
+        }
+      }
+    );
+  };
+
+  const addRecipient = () => {
+    const email = (newEmail || '').trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    setRecipients((prev) => [...prev, { email, name: (newName || '').trim() || null }]);
+    setNewEmail('');
+    setNewName('');
+  };
+
+  const removeRecipient = (index) => {
+    setRecipients((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  if (isLoading) return <p className="settings-loading">Loading email config…</p>;
+
+  return (
+    <>
+      <div className="settings-form-grid" style={{ gridTemplateColumns: '1fr 1fr auto' }}>
+        <div className="settings-form-field">
+          <label className="settings-label">Content to send</label>
+          <select value={contentType} onChange={(e) => setContentType(e.target.value)} className="settings-select">
+            {EMAIL_CONTENT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+        <div className="settings-form-field">
+          <label className="settings-label">Send time (daily)</label>
+          <input
+            type="time"
+            value={sendTime}
+            onChange={(e) => setSendTime(e.target.value)}
+            className="settings-input"
+          />
+        </div>
+        <div className="settings-form-field" style={{ alignSelf: 'end' }}>
+          <PrimaryBtn type="button" onClick={(e) => { e.preventDefault(); handleSave(e); }} disabled={updateMutation.isLoading}>
+            Save config
+          </PrimaryBtn>
+        </div>
+      </div>
+
+      <div className="settings-form-field" style={{ marginTop: 'var(--space-4)' }}>
+        <label className="settings-label">Recipients</label>
+        <div className="settings-form-inline" style={{ marginBottom: 'var(--space-2)' }}>
+          <input
+            type="email"
+            placeholder="Email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            className="settings-input"
+            style={{ maxWidth: 220 }}
+          />
+          <input
+            type="text"
+            placeholder="Name (optional, for greeting)"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            className="settings-input"
+            style={{ maxWidth: 180 }}
+          />
+          <PrimaryBtn type="button" onClick={addRecipient}>Add</PrimaryBtn>
+        </div>
+        <ul className="settings-list settings-list-subfolders">
+          {recipients.map((r, i) => (
+            <li key={i} className="settings-list-item settings-list-item-with-actions">
+              <span className="settings-list-item-label">{r.name ? `${r.name} <${r.email}>` : r.email}</span>
+              <div className="settings-list-item-actions">
+                <button type="button" className="btn btn-danger btn-sm" onClick={() => removeRecipient(i)}>Remove</button>
+              </div>
+            </li>
+          ))}
+          {recipients.length === 0 && <li className="settings-list-empty">No recipients. Add emails above and save.</li>}
+        </ul>
+      </div>
+
+      <hr className="settings-divider" />
+
+      <div className="settings-form-field">
+        <PrimaryBtn
+          type="button"
+          onClick={handleSendNow}
+          disabled={recipients.length === 0 || updateMutation.isLoading || sendNowMutation.isLoading}
+        >
+          {updateMutation.isLoading || sendNowMutation.isLoading ? 'Sending…' : 'Send now'}
+        </PrimaryBtn>
+        {sendNowMutation.isSuccess && (
+          <span className="settings-success" style={{ marginLeft: 'var(--space-2)' }}>
+            Sent to {sendNowMutation.data?.sent ?? 0} recipient(s).
+          </span>
+        )}
+        {sendNowMutation.isError && (
+          <span className="settings-error" style={{ marginLeft: 'var(--space-2)' }}>
+            {sendNowMutation.error?.data?.error || sendNowMutation.error?.message}
+          </span>
+        )}
+      </div>
+    </>
   );
 }
 

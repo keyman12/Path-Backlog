@@ -7,6 +7,51 @@
   margin-bottom: var(--space-4);
 }
 
+.home-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.page-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-view-select-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.home-view-select-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--path-grey-700);
+}
+
+.home-view-select {
+  height: 38px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--path-grey-300);
+  border-radius: var(--radius-md);
+  font-family: var(--font-primary);
+  font-size: 14px;
+  color: var(--path-grey-900);
+  background: var(--path-white);
+  cursor: pointer;
+  min-width: 160px;
+}
+
+.home-view-select:focus {
+  outline: none;
+  border-color: #FF8A80;
+  box-shadow: 0 0 0 2px rgba(255, 138, 128, 0.35);
+}
+
 .page-title {
   font-size: 24px;
   font-weight: 600;
@@ -25,6 +70,32 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+
+.home-content-dual {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-top: var(--space-2);
+}
+
+.home-content-gantt-only {
+  margin-top: var(--space-2);
+}
+
+.home-list-pane {
+  max-width: 720px;
+}
+
+.home-list-pane .backlog-list {
+  background: var(--path-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--path-grey-200);
+  overflow: hidden;
+}
+
+.home-gantt-pane {
+  width: 100%;
 }
 
 .single-pane .backlog-list {
