@@ -5,6 +5,20 @@ const db = require('./db');
 
 const LOGO_PATH = path.join(__dirname, 'assets', 'logo.png');
 
+/** Read PNG width/height from IHDR (bytes 16–23) so we can set explicit img dimensions and avoid stretch on mobile. */
+function getPngDimensions(filePath) {
+  try {
+    const buf = fs.readFileSync(filePath, { start: 0, end: 24 });
+    if (buf.length < 24 || buf.toString('ascii', 12, 16) !== 'IHDR') return null;
+    return {
+      width: buf.readUInt32BE(16),
+      height: buf.readUInt32BE(20)
+    };
+  } catch {
+    return null;
+  }
+}
+
 function getItemsForFilter(contentType) {
   let sql = `
     SELECT bi.*, p.name AS project_name, p.color AS project_color, s.name AS subfolder_name
@@ -47,10 +61,14 @@ function formatDate(str) {
   return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function buildHtml(recipientName, items, contentType, baseUrl) {
+function buildHtml(recipientName, items, contentType, baseUrl, logoSize = null) {
   const filterParam = encodeURIComponent(contentType);
   const viewUrl = baseUrl ? `${baseUrl.replace(/\/$/, '')}/?filter=${filterParam}` : '#';
   const categoryLabel = contentType === 'next_best_actions' ? 'Next best actions' : contentType === 'now_only' ? 'Now' : 'Now & Soon';
+  const targetLogoHeight = 32;
+  const logoStyle = logoSize
+    ? `height: ${targetLogoHeight}px; width: ${Math.round((logoSize.width / logoSize.height) * targetLogoHeight)}px; max-width: 100%; display: block; border: 0;`
+    : 'height: 32px; width: auto; max-width: 100%; display: block; border: 0;';
 
   const rows = items.map((item) => {
     const cat = item.subfolder_name ? `${item.project_name}/${item.subfolder_name}` : item.project_name;
@@ -78,7 +96,9 @@ function buildHtml(recipientName, items, contentType, baseUrl) {
 <body style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5; color: #212121; background: #f5f5f5; padding: 24px;">
   <div style="max-width: 640px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
     <div style="padding: 24px 24px 16px; background: linear-gradient(135deg, rgba(41,125,45,0.04) 0%, transparent 100%);">
-      <img src="cid:logo" alt="Path" style="height: 32px; display: block;" />
+      <div style="display: inline-block;">
+        <img src="cid:logo" alt="Path" style="${logoStyle}" />
+      </div>
     </div>
     <div style="padding: 0 24px 24px;">
       <p style="margin: 0 0 16px;">Dear ${escapeHtml(recipientName || 'there')},</p>
@@ -159,11 +179,12 @@ async function sendWorkListEmail(recipients, contentType) {
     });
   }
 
+  const logoSize = fs.existsSync(LOGO_PATH) ? getPngDimensions(LOGO_PATH) : null;
   const results = [];
   for (const r of recipients) {
     const to = typeof r === 'string' ? r : r.email;
     const name = typeof r === 'string' ? null : (r.name || null);
-    const html = buildHtml(name || to, items, contentType, baseUrl);
+    const html = buildHtml(name || to, items, contentType, baseUrl, logoSize);
     try {
       await transport.sendMail({
         from: fromName ? `"${fromName}" <${from}>` : from,
