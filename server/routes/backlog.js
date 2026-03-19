@@ -240,13 +240,21 @@ router.patch('/:id', (req, res) => {
   const item = db.prepare('SELECT * FROM backlog_items WHERE id = ?').get(id);
   if (!item) return res.status(404).json({ error: 'Not found' });
   const allowed = [
-    'subfolder_id', 'title', 'description', 'priority', 'status', 'progress',
+    'project_id', 'subfolder_id', 'title', 'description', 'priority', 'status', 'progress',
     'effort_days', 'color_label', 'due_date', 'sort_order'
   ];
   const updates = [];
   const params = [];
+  if (req.body.project_id !== undefined) {
+    const pid = Number(req.body.project_id);
+    if (Number.isNaN(pid)) return res.status(400).json({ error: 'Invalid project_id' });
+    updates.push('project_id = ?'); params.push(pid);
+    updates.push('subfolder_id = ?'); params.push(null);
+  }
   for (const key of allowed) {
     if (req.body[key] === undefined) continue;
+    if (key === 'project_id') continue;
+    if (key === 'subfolder_id' && req.body.project_id !== undefined) continue;
     if (key === 'priority' && !PRIORITIES.includes(req.body[key])) continue;
     if (key === 'status' && !STATUSES.includes(req.body[key])) continue;
     if (key === 'progress') {

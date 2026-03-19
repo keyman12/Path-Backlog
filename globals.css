@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "leaflet/dist/leaflet.css";
+
+/* Path brand design tokens (from Path Tokens.zip) */
+:root {
+  /* Primary (green) */
+  --path-primary: #297d2d;
+  --path-primary-light-1: #3b9f40;
+  --path-primary-light-2: #49bc4e;
+  --path-primary-light-3: #74d479;
+  --path-primary-light-4: #97df9a;
+  --path-secondary-dark-1: #1b5e20;
+  /* Secondary (coral/red) */
+  --path-secondary: #ff5252;
+  --path-secondary-light-1: #ff8a80;
+  --path-secondary-light-2: #ffa49c;
+  --path-secondary-light-3: #ffb6af;
+  --path-secondary-light-4: #ffd4d0;
+  /* Tertiary */
+  --path-tertiary: #7672c5;
+  --path-tertiary-dark-1: #4f4ba2;
+  --path-tertiary-dark-2: #3b3878;
+  /* Semantic */
+  --path-warning: #e7a500;
+  --path-information: #0a70c5;
+  --path-alert: #d50000;
+  /* Greyscale */
+  --path-grey-1: #f8f8f8;
+  --path-grey-2: #f3f3f3;
+  --path-grey-3: #e9ece9;
+  --path-grey-4: #d8dbd8;
+  --path-grey-5: #c1c4c0;
+  --path-grey-6: #afb3af;
+  --path-grey-7: #a0a29f;
+  --path-grey-8: #91958f;
+  --path-grey-9: #818780;
+  --path-grey-10: #747973;
+  --path-grey-11: #646763;
+  --path-grey-12: #565955;
+  --path-grey-13: #454745;
+  --path-grey-14: #454745;
+  --path-blackish: #222222;
+  --path-white: #ffffff;
+  /* Card shadow */
+  --path-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+body {
+  font-family: var(--font-roboto), sans-serif;
+  color: var(--path-blackish);
+  background-color: var(--path-white);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-poppins), sans-serif;
+}
+
+/* Focus ring for accessibility */
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--path-secondary-light-1);
+}
+
+/* Commission table responsive: compact vs full layout
+   Uses container queries so breakpoint is based on table column width, not viewport.
+   When the table container is narrow (e.g. chart+table side-by-side in a small window),
+   show compact; when wide, show full. */
+.pricing-table-container {
+  container-type: inline-size;
+  container-name: pricing-table;
+}
+.pricing-table-compact { display: block !important; }
+.pricing-table-full { display: none !important; }
+@container pricing-table (min-width: 520px) {
+  .pricing-table-compact { display: none !important; }
+  .pricing-table-full { display: block !important; }
+}

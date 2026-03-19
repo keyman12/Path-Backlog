@@ -34,7 +34,7 @@ export default function Reports() {
           <ul className="report-list">
             {byPriority.map(({ priority, count }) => (
               <li key={priority}>
-                <span className="report-list-label">{priority}</span>
+                <span className="report-list-label">{priority === 'Soon' ? 'Next' : priority}</span>
                 <span className="report-list-value">{count}</span>
               </li>
             ))}

@@ -37,3 +37,12 @@ a {
 a:hover {
   text-decoration: underline;
 }
+
+/* Focus ring for accessibility (Path brand) */
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--path-secondary-light-1);
+}

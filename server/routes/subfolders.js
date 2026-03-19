@@ -46,6 +46,12 @@ router.patch('/:id', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   const id = Number(req.params.id);
+  const count = db.prepare('SELECT COUNT(*) AS n FROM backlog_items WHERE subfolder_id = ?').get(id);
+  if (count.n > 0) {
+    return res.status(400).json({
+      error: `Sub-folder has ${count.n} item(s). Re-assign them before deleting.`
+    });
+  }
   const r = db.prepare('DELETE FROM subfolders WHERE id = ?').run(id);
   if (r.changes === 0) return res.status(404).json({ error: 'Subfolder not found' });
   res.json({ ok: true });

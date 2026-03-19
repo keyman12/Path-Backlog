@@ -61,8 +61,8 @@ function SortableItem({ item, isSelected, onSelect }) {
         <span className="backlog-list-item-title" onClick={() => onSelect(item.id)}>
           {item.title}
         </span>
-        <span className={`backlog-list-item-priority priority-${(item.priority || '').toLowerCase()}`}>
-          {item.priority || 'Later'}
+<span className={`backlog-list-item-priority priority-${(item.priority || '').toLowerCase()}`}>
+                {item.priority === 'Soon' ? 'Next' : (item.priority || 'Later')}
         </span>
       </div>
       {item.description && (

@@ -26,7 +26,7 @@ export default function BacklogList({ items, selectedId, onSelect, showProject }
           <div className="backlog-list-item-row">
             <span className="backlog-list-item-title">{item.title}</span>
             <span className={`backlog-list-item-priority priority-${(item.priority || '').toLowerCase()}`}>
-              {item.priority || 'Later'}
+              {item.priority === 'Soon' ? 'Next' : (item.priority || 'Later')}
             </span>
           </div>
           {item.description && (

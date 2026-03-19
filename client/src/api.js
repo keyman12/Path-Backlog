@@ -13,7 +13,12 @@ async function request(path, options = {}) {
       ...options.headers
     }
   });
-  const data = res.ok ? await res.json().catch(() => ({})) : null;
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    data = res.ok ? {} : null;
+  }
   if (!res.ok) {
     const err = new Error(data?.error || res.statusText || 'Request failed');
     err.status = res.status;

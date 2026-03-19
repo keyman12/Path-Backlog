@@ -52,6 +52,10 @@
   box-shadow: 0 0 0 2px rgba(255, 138, 128, 0.35);
 }
 
+.home-page-header .page-title {
+  color: var(--path-primary);
+}
+
 .page-title {
   font-size: 24px;
   font-weight: 600;

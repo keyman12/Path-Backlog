@@ -154,11 +154,11 @@ export default function BacklogDetail({ itemId, onClose, onUpdated }) {
               className="backlog-detail-select"
             >
               {PRIORITIES.map((p) => (
-                <option key={p} value={p}>{p}</option>
+                <option key={p} value={p}>{p === 'Soon' ? 'Next' : p}</option>
               ))}
             </select>
           ) : (
-            item.priority
+            item.priority === 'Soon' ? 'Next' : (item.priority || 'Later')
           )}
         </span>
         {item.due_date && (

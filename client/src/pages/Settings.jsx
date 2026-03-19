@@ -172,6 +172,27 @@ export default function Settings() {
   }, [updateProjectColorMutation]);
   const displayColor = useCallback((p) => localColors[p.id] ?? p.color ?? '#297D2D', [localColors]);
 
+  const [editingProject, setEditingProject] = useState(null);
+  const updateProjectNameMutation = useMutation(
+    ({ id, name }) => api.projects.update(id, { name }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('projects');
+        queryClient.invalidateQueries('backlog');
+        queryClient.invalidateQueries('backlog-consolidated');
+        setEditingProject(null);
+      }
+    }
+  );
+  const deleteProjectMutation = useMutation(api.projects.delete, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('projects');
+      queryClient.invalidateQueries(['subfolders', selectedProjectId]);
+      queryClient.invalidateQueries('backlog');
+      queryClient.invalidateQueries('backlog-consolidated');
+    }
+  });
+
   const isAdmin = user?.role === 'admin';
 
   return (
@@ -216,9 +237,38 @@ export default function Settings() {
                 <hr className="settings-divider" />
                 <ul className="settings-colour-list">
                   {projects.map((p) => (
-                    <li key={p.id} className="settings-colour-row">
+                    <li key={p.id} className="settings-colour-row settings-colour-row-with-actions">
                       <span className="settings-colour-swatch" style={{ background: displayColor(p) }} />
-                      <span className="settings-colour-name">{p.name}</span>
+                      {editingProject?.id === p.id ? (
+                        <div className="settings-colour-rename">
+                          <input
+                            type="text"
+                            className="settings-input settings-colour-rename-input"
+                            value={editingProject.name}
+                            onChange={(e) => setEditingProject((prev) => prev ? { ...prev, name: e.target.value } : null)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && editingProject.name.trim()) {
+                                updateProjectNameMutation.mutate({ id: p.id, name: editingProject.name.trim() });
+                              }
+                              if (e.key === 'Escape') setEditingProject(null);
+                            }}
+                            autoFocus
+                          />
+                          <PrimaryBtn
+                            type="button"
+                            className="btn-sm"
+                            disabled={!editingProject.name.trim() || updateProjectNameMutation.isLoading}
+                            onClick={() => editingProject.name.trim() && updateProjectNameMutation.mutate({ id: p.id, name: editingProject.name.trim() })}
+                          >
+                            Save
+                          </PrimaryBtn>
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditingProject(null)}>
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="settings-colour-name">{p.name}</span>
+                      )}
                       <input
                         type="color"
                         value={displayColor(p)}
@@ -226,6 +276,34 @@ export default function Settings() {
                         className="settings-colour-picker"
                         aria-label={`Colour for ${p.name}`}
                       />
+                      {editingProject?.id !== p.id && (
+                        <div className="settings-colour-row-actions">
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => setEditingProject({ id: p.id, name: p.name })}
+                          >
+                            Rename
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-danger btn-sm"
+                            onClick={() => {
+                              if (window.confirm(`Delete category "${p.name}"? Sub-folders will be removed. You can only delete if all items are re-assigned to other categories.`)) {
+                                deleteProjectMutation.mutate(p.id);
+                              }
+                            }}
+                            disabled={deleteProjectMutation.isLoading}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                      {deleteProjectMutation.isError && deleteProjectMutation.variables === p.id && (
+                        <span className="settings-error settings-colour-delete-error">
+                          {deleteProjectMutation.error?.data?.error || deleteProjectMutation.error?.message}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -330,7 +408,7 @@ export default function Settings() {
                             type="button"
                             className="btn btn-danger btn-sm"
                             onClick={() => {
-                              if (window.confirm(`Delete sub-folder "${sf.name}"? Items in it will stay in the category with no sub-folder.`)) {
+                              if (window.confirm(`Delete sub-folder "${sf.name}"? You can only delete if all items are re-assigned.`)) {
                                 deleteSubfolderMutation.mutate(sf.id);
                               }
                             }}
@@ -340,6 +418,11 @@ export default function Settings() {
                           </button>
                         </div>
                       </>
+                    )}
+                    {deleteSubfolderMutation.isError && deleteSubfolderMutation.variables === sf.id && (
+                      <span className="settings-error settings-list-item-error">
+                        {deleteSubfolderMutation.error?.data?.error || deleteSubfolderMutation.error?.message}
+                      </span>
                     )}
                   </li>
                 ))}
@@ -370,7 +453,7 @@ export default function Settings() {
               <div className="settings-section-icon" aria-hidden>✉️</div>
               <div className="settings-section-heading">
                 <h2 className="settings-section-title">Daily work list email</h2>
-                <p className="settings-section-desc">Send the day's work list to a list of recipients at a set time. Choose what to include: next best actions (Now + due in 48h + 75%+ complete), Now only, or Now & Soon.</p>
+                <p className="settings-section-desc">Send the day's work list to a list of recipients at a set time. Choose what to include: next best actions (Now + due in 48h + 75%+ complete), Now only, or Now & Next.</p>
               </div>
             </div>
             <div className="settings-section-body">
@@ -404,7 +487,7 @@ export default function Settings() {
 const EMAIL_CONTENT_OPTIONS = [
   { value: 'next_best_actions', label: 'Next best actions (Now + due in 48h + 75%+ complete)' },
   { value: 'now_only', label: 'Now only' },
-  { value: 'now_and_soon', label: 'Now & Soon' }
+  { value: 'now_and_soon', label: 'Now & Next' }
 ];
 
 function EmailConfigPanel() {

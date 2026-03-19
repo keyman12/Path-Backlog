@@ -48,6 +48,13 @@ router.patch('/:id', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   const id = Number(req.params.id);
+  const count = db.prepare('SELECT COUNT(*) AS n FROM backlog_items WHERE project_id = ?').get(id);
+  if (count.n > 0) {
+    return res.status(400).json({
+      error: `Category has ${count.n} item(s). Re-assign them to another category before deleting.`
+    });
+  }
+  db.prepare('DELETE FROM subfolders WHERE project_id = ?').run(id);
   const r = db.prepare('DELETE FROM projects WHERE id = ?').run(id);
   if (r.changes === 0) return res.status(404).json({ error: 'Project not found' });
   res.json({ ok: true });

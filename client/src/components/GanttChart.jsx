@@ -1,5 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import './GanttChart.css';
+
+const LEFTWIDTH = 330;
+const MIN_CHART_WIDTH = 200;
 
 function getMonday(d) {
   const d2 = new Date(d);
@@ -119,9 +122,21 @@ export default function GanttChart({
   const scaleStart = ticks[0] ? ticks[0].getTime() : startDate.getTime();
   const scaleEnd = ticks.length > 0 ? ticks[ticks.length - 1].getTime() + (ticks[1] ? ticks[1].getTime() - ticks[0].getTime() : 0) : scaleStart + totalMs;
 
-  const leftWidth = 330;
-  const tickWidth = 32;
-  const chartWidth = Math.max(ticks.length * tickWidth, 200);
+  const scrollRef = useRef(null);
+  const [chartMinWidth, setChartMinWidth] = useState(MIN_CHART_WIDTH);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const update = () => {
+      const w = el.clientWidth;
+      setChartMinWidth(Math.max(MIN_CHART_WIDTH, w - LEFTWIDTH));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   return (
     <div className={`gantt-wrap ${className}`}>
@@ -138,9 +153,9 @@ export default function GanttChart({
           <option value="months">Months</option>
         </select>
       </div>
-      <div className="gantt-scroll">
-        <div className="gantt-container" style={{ width: leftWidth + chartWidth }}>
-          <div className="gantt-left" style={{ width: leftWidth }}>
+      <div ref={scrollRef} className="gantt-scroll">
+        <div className="gantt-container">
+          <div className="gantt-left" style={{ width: LEFTWIDTH }}>
             <div className="gantt-row gantt-header-row">
               <div className="gantt-cell gantt-label-cell gantt-header-label">Task</div>
             </div>
@@ -152,15 +167,11 @@ export default function GanttChart({
               </div>
             ))}
           </div>
-          <div className="gantt-chart" style={{ width: chartWidth }}>
+          <div className="gantt-chart" style={{ minWidth: chartMinWidth }}>
             <div className="gantt-row gantt-header-row">
-              <div className="gantt-header-times" style={{ width: chartWidth }}>
+              <div className="gantt-header-times">
                 {ticks.map((tick, i) => (
-                  <div
-                    key={i}
-                    className="gantt-header-tick"
-                    style={{ width: tickWidth, minWidth: tickWidth }}
-                  >
+                  <div key={i} className="gantt-header-tick">
                     {formatAxisLabel(tick, timeScale)}
                   </div>
                 ))}
@@ -173,7 +184,7 @@ export default function GanttChart({
               const width = Math.max(((endMs - startMs) / (scaleEnd - scaleStart)) * 100, 1);
               return (
                 <div key={bar.id} className="gantt-row gantt-bar-row">
-                  <div className="gantt-bar-track" style={{ width: chartWidth }}>
+                  <div className="gantt-bar-track">
                     <div
                       className="gantt-bar"
                       style={{

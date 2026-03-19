@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { api } from '../api';
 import { getDueDateStatus } from '../utils/dateAlerts';
 import './BacklogListItemInline.css';
@@ -48,6 +48,23 @@ export default function BacklogListItemInline({
   projectColor
 }) {
   const queryClient = useQueryClient();
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef(null);
+  const { data: projectsData } = useQuery('projects', api.projects.list, { staleTime: 60 * 1000 });
+  const projects = projectsData?.projects ?? [];
+  const otherProjects = projects.filter((p) => Number(p.id) !== Number(item.project_id));
+
+  useEffect(() => {
+    if (!categoryDropdownOpen) return;
+    const handleClickOutside = (e) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target)) {
+        setCategoryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [categoryDropdownOpen]);
+
   const [form, setForm] = useState({
     title: item.title,
     description: item.description ?? '',
@@ -99,6 +116,18 @@ export default function BacklogListItemInline({
         queryClient.invalidateQueries(['backlog-consolidated']);
         onUpdated?.();
         onEditClick(null);
+      }
+    }
+  );
+
+  const moveToProjectMutation = useMutation(
+    (projectId) => api.backlog.update(item.id, { project_id: projectId }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['backlog']);
+        queryClient.invalidateQueries(['backlog-consolidated']);
+        onUpdated?.();
+        setCategoryDropdownOpen(false);
       }
     }
   );
@@ -187,14 +216,22 @@ export default function BacklogListItemInline({
         <div className="inline-item-row">
           <div className="inline-item-main" onClick={() => { if (isExpanded) handleClose(); else onEditClick?.(item.id); }}>
             <span className="inline-item-title">{item.title}</span>
+          </div>
+          <span className="inline-item-row-markers">
+            {!isCompleted && item.due_date && getDueDateStatus(item.due_date) === 'overdue' && (
+              <span className="inline-item-due-alert due-overdue">Overdue</span>
+            )}
+            {!isCompleted && item.due_date && getDueDateStatus(item.due_date) === 'due_soon' && (
+              <span className="inline-item-due-alert due-soon">Due soon</span>
+            )}
             {isCompleted ? (
               <span className="inline-item-priority priority-completed">Completed</span>
             ) : (
               <span className={`inline-item-priority priority-${(item.priority || 'later').toLowerCase()}`}>
-                {item.priority || 'Later'}
+                {item.priority === 'Soon' ? 'Next' : (item.priority || 'Later')}
               </span>
             )}
-          </div>
+          </span>
           <button
             type="button"
             className="inline-item-edit-btn"
@@ -216,11 +253,36 @@ export default function BacklogListItemInline({
           <div className="inline-item-meta">
             <span className="inline-item-meta-left">
               {showProject && item.project_name && (
-                <span
-                  className="inline-item-project"
-                  style={{ color: (projectColor || item.project_color) || 'var(--path-grey-700)' }}
-                >
-                  {item.subfolder_name ? `${item.project_name}/${item.subfolder_name}` : item.project_name}
+                <span className="inline-item-project-wrap" ref={categoryDropdownRef}>
+                  <button
+                    type="button"
+                    className="inline-item-project inline-item-project-btn"
+                    style={{ color: (projectColor || item.project_color) || 'var(--path-grey-700)' }}
+                    onClick={() => setCategoryDropdownOpen((o) => !o)}
+                    aria-expanded={categoryDropdownOpen}
+                    aria-haspopup="listbox"
+                    aria-label={`Category: ${item.project_name}. Click to re-assign.`}
+                  >
+                    {item.subfolder_name ? `${item.project_name}/${item.subfolder_name}` : item.project_name}
+                  </button>
+                  {categoryDropdownOpen && otherProjects.length > 0 && (
+                    <ul className="inline-item-project-dropdown" role="listbox">
+                      {otherProjects.map((p) => (
+                        <li key={p.id}>
+                          <button
+                            type="button"
+                            className="inline-item-project-option"
+                            onClick={() => moveToProjectMutation.mutate(p.id)}
+                            disabled={moveToProjectMutation.isLoading}
+                            role="option"
+                          >
+                            <span className="inline-item-project-option-swatch" style={{ background: p.color || '#297D2D' }} />
+                            {p.name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </span>
               )}
               {item.due_date && (
@@ -231,14 +293,6 @@ export default function BacklogListItemInline({
               )}
               {item.effort_days != null && item.effort_days > 0 && (
                 <span className="inline-item-effort">{item.effort_days % 1 === 0 ? `${Math.round(item.effort_days)}d` : `${item.effort_days}d`}</span>
-              )}
-            </span>
-            <span className="inline-item-meta-right">
-              {item.due_date && getDueDateStatus(item.due_date) === 'overdue' && (
-                <span className="inline-item-due-alert due-overdue">Overdue</span>
-              )}
-              {item.due_date && getDueDateStatus(item.due_date) === 'due_soon' && (
-                <span className="inline-item-due-alert due-soon">Due soon</span>
               )}
             </span>
           </div>
@@ -278,9 +332,9 @@ export default function BacklogListItemInline({
                 className="inline-form-select inline-form-priority-select"
                 aria-label="Priority"
               >
-                {PRIORITIES.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
+{PRIORITIES.map((p) => (
+                <option key={p} value={p}>{p === 'Soon' ? 'Next' : p}</option>
+              ))}
               </select>
             </label>
             <label className="inline-form-label">
