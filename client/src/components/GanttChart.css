@@ -48,21 +48,10 @@
 
 .gantt-container {
   display: flex;
-  min-width: 100%;
+  flex-direction: column;
 }
 
-.gantt-left {
-  flex-shrink: 0;
-  border-right: 1px solid var(--path-grey-200);
-  background: var(--path-white);
-}
-
-.gantt-chart {
-  flex: 1;
-  min-width: 200px;
-  background-color: var(--path-grey-100);
-}
-
+/* Each row is one flex row: label + chart share the same height so wrapping labels don't desync bars */
 .gantt-row {
   display: flex;
   align-items: stretch;
@@ -70,14 +59,21 @@
   border-bottom: 1px solid var(--path-grey-200);
 }
 
+.gantt-row:last-child {
+  border-bottom: none;
+}
+
 .gantt-task-row {
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .gantt-task-row .gantt-cell {
   align-items: flex-start;
   padding-top: var(--space-2);
   padding-bottom: var(--space-2);
+  flex-shrink: 0;
+  border-right: 1px solid var(--path-grey-200);
+  background: var(--path-white);
 }
 
 .gantt-task-row .gantt-label-cell {
@@ -86,8 +82,10 @@
   text-overflow: clip;
 }
 
-.gantt-row:last-child {
-  border-bottom: none;
+.gantt-task-row .gantt-bar-track {
+  flex: 1;
+  min-width: 0;
+  background: var(--path-white);
 }
 
 .gantt-header-row {
@@ -97,6 +95,15 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--path-grey-600);
+}
+
+.gantt-header-row .gantt-cell {
+  border-right: 1px solid var(--path-grey-200);
+  background: var(--path-white);
+}
+
+.gantt-header-row .gantt-header-times {
+  background: var(--path-grey-100);
 }
 
 .gantt-cell {
@@ -110,6 +117,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.gantt-task-row .gantt-label-cell {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .gantt-header-label {
@@ -128,27 +141,24 @@
 
 .gantt-header-times {
   display: flex;
-  flex: 1;
-  min-width: 0;
+  flex-shrink: 0;
 }
 
 .gantt-header-tick {
-  flex: 1;
-  min-width: 0;
+  flex-shrink: 0;
   padding: var(--space-2) var(--space-1);
   text-align: center;
   border-left: 1px solid var(--path-grey-200);
-}
-
-.gantt-bar-row {
-  background: var(--path-white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .gantt-bar-track {
   position: relative;
   width: 100%;
-  height: 100%;
   min-height: 32px;
+  flex-shrink: 0;
 }
 
 .gantt-bar {
