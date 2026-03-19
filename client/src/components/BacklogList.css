@@ -139,11 +139,42 @@
   color: white;
 }
 
-/* Scrollable list: show ~6 items then scroll */
+/* Toolbar above list (expand/collapse) */
+.backlog-list-toolbar {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--path-grey-200);
+  margin-bottom: 0;
+}
+
+.backlog-list-expand-btn {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--path-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-1) 0;
+  font-family: var(--font-primary);
+}
+
+.backlog-list-expand-btn:hover {
+  text-decoration: underline;
+}
+
+.backlog-list-expand-btn:focus-visible {
+  outline: none;
+  text-decoration: underline;
+}
+
+/* Scrollable list: show ~6 items then scroll; expanded = full height for drag/drop */
 .backlog-list-scroll-wrap {
   max-height: 380px;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.backlog-list-scroll-wrap--expanded {
+  max-height: none;
 }
 
 .backlog-list-inline {

@@ -108,6 +108,7 @@ export default function ConsolidatedBacklogListInline({
   const sortableItemIds = useMemo(() => itemsToShow.map((i) => String(i.id)), [itemsToShow]);
   const itemsToShowRef = useRef(itemsToShow);
   itemsToShowRef.current = itemsToShow;
+  const [listExpanded, setListExpanded] = useState(false);
 
   const handleUpdated = () => {
     setLocalOrder(null);
@@ -223,7 +224,17 @@ export default function ConsolidatedBacklogListInline({
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={sortableItemIds} strategy={verticalListSortingStrategy}>
-        <div className="backlog-list-scroll-wrap">
+        <div className="backlog-list-toolbar">
+          <button
+            type="button"
+            className="backlog-list-expand-btn"
+            onClick={() => setListExpanded((e) => !e)}
+            aria-expanded={listExpanded}
+          >
+            {listExpanded ? 'Collapse list' : 'Expand list'}
+          </button>
+        </div>
+        <div className={`backlog-list-scroll-wrap ${listExpanded ? 'backlog-list-scroll-wrap--expanded' : ''}`}>
           <ul className="backlog-list backlog-list-inline">
             {itemsToShow.length === 0 && (
               <li className="backlog-list-empty">No items</li>
