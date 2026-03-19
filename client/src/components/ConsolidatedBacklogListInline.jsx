@@ -223,20 +223,22 @@ export default function ConsolidatedBacklogListInline({
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={sortableItemIds} strategy={verticalListSortingStrategy}>
-        <ul className="backlog-list backlog-list-inline">
-          {itemsToShow.length === 0 && (
-            <li className="backlog-list-empty">No items</li>
-          )}
-          {itemsToShow.map((item) => (
-            <SortableConsolidatedItem
-              key={item.id}
-              item={item}
-              expandedId={expandedId}
-              onEditClick={onEditClick}
-              onUpdated={handleUpdated}
-            />
-          ))}
-        </ul>
+        <div className="backlog-list-scroll-wrap">
+          <ul className="backlog-list backlog-list-inline">
+            {itemsToShow.length === 0 && (
+              <li className="backlog-list-empty">No items</li>
+            )}
+            {itemsToShow.map((item) => (
+              <SortableConsolidatedItem
+                key={item.id}
+                item={item}
+                expandedId={expandedId}
+                onEditClick={onEditClick}
+                onUpdated={handleUpdated}
+              />
+            ))}
+          </ul>
+        </div>
       </SortableContext>
       <DragOverlay dropAnimation={null}>
         <DragOverlayRow itemsToShow={itemsToShow} />

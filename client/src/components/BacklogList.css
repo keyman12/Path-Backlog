@@ -139,6 +139,13 @@
   color: white;
 }
 
+/* Scrollable list: show ~6 items then scroll */
+.backlog-list-scroll-wrap {
+  max-height: 380px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 .backlog-list-inline {
   padding: 0;
 }

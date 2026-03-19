@@ -1,5 +1,7 @@
 # Deploying Path Backlog to a Raspberry Pi (HTTPS + daily backup)
 
+> **Deploying on AWS EC2 (Amazon Linux) instead?** See [DEPLOY-EC2-AMAZON-LINUX.md](DEPLOY-EC2-AMAZON-LINUX.md). The app and backup script are the same; only OS commands and paths differ.
+
 This guide covers deploying the app on a Raspberry Pi with:
 - **HTTPS** via nginx and Certbot (Let’s Encrypt)
 - **Daily database backup** to another machine (cron or systemd timer)

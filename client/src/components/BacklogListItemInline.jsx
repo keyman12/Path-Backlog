@@ -104,15 +104,20 @@ export default function BacklogListItemInline({
   );
 
   const saveDebounceRef = useRef(null);
+  const formRef = useRef(form);
+  formRef.current = form;
 
-  const buildPayload = (overrides = {}) => ({
-    title: (overrides.title !== undefined ? overrides.title : form.title) ?? '',
-    description: (overrides.description !== undefined ? overrides.description : form.description) ?? '',
-    priority: (overrides.priority !== undefined ? overrides.priority : form.priority) ?? 'Later',
-    progress: (overrides.progress !== undefined ? overrides.progress : form.progress) ?? 0,
-    due_date: (overrides.due_date !== undefined ? overrides.due_date : form.due_date) || null,
-    effort_days: (() => { const v = overrides.effort_days !== undefined ? overrides.effort_days : form.effort_days; return v === '' ? null : (parseFloat(v) || null); })()
-  });
+  const buildPayload = (overrides = {}) => {
+    const f = formRef.current;
+    return {
+      title: (overrides.title !== undefined ? overrides.title : f.title) ?? '',
+      description: (overrides.description !== undefined ? overrides.description : f.description) ?? '',
+      priority: (overrides.priority !== undefined ? overrides.priority : f.priority) ?? 'Later',
+      progress: (overrides.progress !== undefined ? overrides.progress : f.progress) ?? 0,
+      due_date: (overrides.due_date !== undefined ? overrides.due_date : f.due_date) || null,
+      effort_days: (() => { const v = overrides.effort_days !== undefined ? overrides.effort_days : f.effort_days; return v === '' ? null : (parseFloat(v) || null); })()
+    };
+  };
 
   const saveNow = (payload) => {
     if (saveDebounceRef.current) {
