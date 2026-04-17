@@ -5,3 +5,6 @@ dist/
 server/data/
 .DS_Store
 *.log
+
+# macOS AppleDouble files (SMB metadata)
+._*
